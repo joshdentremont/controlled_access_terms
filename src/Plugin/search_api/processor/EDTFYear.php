@@ -139,14 +139,8 @@ class EDTFYear extends ProcessorPluginBase implements PluginFormInterface {
   public function addFieldValues(ItemInterface $item) {
     $entity = $item->getOriginalObject()->getValue();
     foreach ($this->configuration['fields'] as $field) {
-      $components = explode('|', $field, 3);
-      if (count($components) != 3) {
-        continue;
-      }
+      [$entityType, $bundle, $field_name] = explode('|', $field, 3);
 
-      [$entityType, $bundle, $field_name] = $components;
-
-      $edtf = FALSE;
       if ($entityType === 'paragraph') {
         $edtf = $this->getDateFromParagraphField($entity, $bundle, $field_name);
       }
@@ -156,84 +150,85 @@ class EDTFYear extends ProcessorPluginBase implements PluginFormInterface {
         && !$entity->get($field_name)->isEmpty()) {
         $edtf = trim($entity->get($field_name)->value);
       }
+      else {
+        continue;
+      }
 
-      if ($edtf) {
-        if ($edtf != "nan" && empty(EDTFUtils::validate($edtf))) {
-          if ($this->configuration['ignore_undated'] && $edtf == "XXXX") {
-            continue;
+      if ($edtf != "nan" && empty(EDTFUtils::validate($edtf))) {
+        if ($this->configuration['ignore_undated'] && $edtf == "XXXX") {
+          continue;
+        }
+        try {
+          $parser = EdtfFactory::newParser();
+          $years = [];
+          // Sets.
+          if (strpos($edtf, '[') !== FALSE || strpos($edtf, '{') !== FALSE) {
+            $dates = $parser->parse($edtf)->getEdtfValue();
+            $years = array_map(function ($date) {
+              return $date->getYear();
+            }, $dates->getDates());
           }
-          try {
-            $parser = EdtfFactory::newParser();
-            $years = [];
-            // Sets.
-            if (strpos($edtf, '[') !== FALSE || strpos($edtf, '{') !== FALSE) {
-              $dates = $parser->parse($edtf)->getEdtfValue();
-              $years = array_map(function ($date) {
-                return $date->getYear();
-              }, $dates->getDates());
+          else {
+            // Open start dates with `../`.
+            if (substr($edtf, 0, 3) === '../') {
+              if ($this->configuration['ignore_open_start']) {
+                $edtf = substr($edtf, 3);
+              }
+              else {
+                $edtf = str_replace('../', $this->configuration['open_start_year'] . '/', $edtf);
+              }
             }
-            else {
-              // Open start dates with `../`.
-              if (substr($edtf, 0, 3) === '../') {
-                if ($this->configuration['ignore_open_start']) {
-                  $edtf = substr($edtf, 3);
-                }
-                else {
-                  $edtf = str_replace('../', $this->configuration['open_start_year'] . '/', $edtf);
-                }
+            // Open start dates with `/`.
+            if (substr($edtf, 0, 1) === '/') {
+              if ($this->configuration['ignore_open_start']) {
+                $edtf = substr($edtf, 1);
               }
-              // Open start dates with `/`.
-              if (substr($edtf, 0, 1) === '/') {
-                if ($this->configuration['ignore_open_start']) {
-                  $edtf = substr($edtf, 1);
-                }
-                else {
-                  $edtf = str_replace('/', $this->configuration['open_start_year'] . '/', $edtf);
-                }
+              else {
+                $edtf = str_replace('/', $this->configuration['open_start_year'] . '/', $edtf);
               }
-              // Open end dates with `/..`.
-              if (substr($edtf, -3) === '/..') {
-                if ($this->configuration['ignore_open_end']) {
-                  $edtf = substr($edtf, 0, -3);
-                }
-                else {
-                  $end_year = (empty($this->configuration['open_end_year'])) ? date('Y') : $this->configuration['open_end_year'];
-                  $edtf = str_replace('/..', '/' . $end_year, $edtf);
-                }
-              }
-              // Open end dates with `/`.
-              if (substr($edtf, -1) === '/') {
-                if ($this->configuration['ignore_open_end']) {
-                  $edtf = substr($edtf, 0, -1);
-                }
-                else {
-                  $end_year = (empty($this->configuration['open_end_year'])) ? date('Y') : $this->configuration['open_end_year'];
-                  $edtf = str_replace('/', '/' . $end_year, $edtf);
-                }
-              }
-              $parsed = $parser->parse($edtf)->getEdtfValue();
-              $years = range(intval(date('Y', $parsed->getMin())), intval(date('Y', $parsed->getMax())));
             }
-            foreach ($years as $year) {
-              if (is_numeric($year)) {
-                $fields = $item->getFields(FALSE);
-                $fields = $this->getFieldsHelper()
-                  ->filterForPropertyPath($fields, NULL, 'edtf_year');
-                foreach ($fields as $field) {
-                  $field->addValue($year);
-                }
+            // Open end dates with `/..`.
+            if (substr($edtf, -3) === '/..') {
+              if ($this->configuration['ignore_open_end']) {
+                $edtf = substr($edtf, 0, -3);
+              }
+              else {
+                $end_year = (empty($this->configuration['open_end_year'])) ? date('Y') : $this->configuration['open_end_year'];
+                $edtf = str_replace('/..', '/' . $end_year, $edtf);
+              }
+            }
+            // Open end dates with `/`.
+            if (substr($edtf, -1) === '/') {
+              if ($this->configuration['ignore_open_end']) {
+                $edtf = substr($edtf, 0, -1);
+              }
+              else {
+                $end_year = (empty($this->configuration['open_end_year'])) ? date('Y') : $this->configuration['open_end_year'];
+                $edtf = str_replace('/', '/' . $end_year, $edtf);
+              }
+            }
+            $parsed = $parser->parse($edtf)->getEdtfValue();
+            $years = range(intval(date('Y', $parsed->getMin())), intval(date('Y', $parsed->getMax())));
+          }
+          foreach ($years as $year) {
+            if (is_numeric($year)) {
+              $fields = $item->getFields(FALSE);
+              $fields = $this->getFieldsHelper()
+                ->filterForPropertyPath($fields, NULL, 'edtf_year');
+              foreach ($fields as $field) {
+                $field->addValue($year);
               }
             }
           }
-          catch (\Throwable $e) {
-            \Drupal::logger('controlled_access_terms')
-              ->warning(t("Could not parse EDTF value '@edtf' for indexing @type/@id",
-                [
-                  '@edtf' => $edtf,
-                  '@type' => $entity->getEntityTypeId(),
-                  '@id' => $entity->id(),
-                ]));
-          }
+        }
+        catch (\Throwable $e) {
+          \Drupal::logger('controlled_access_terms')
+            ->warning(t("Could not parse EDTF value '@edtf' for indexing @type/@id",
+              [
+                '@edtf' => $edtf,
+                '@type' => $entity->getEntityTypeId(),
+                '@id' => $entity->id(),
+              ]));
         }
       }
     }
