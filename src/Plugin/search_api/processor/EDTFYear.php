@@ -251,7 +251,7 @@ class EDTFYear extends ProcessorPluginBase implements PluginFormInterface {
       $paragraph_entity = $entity->get($paragraph_field_name)
         ->referencedEntities()[0] ?? NULL;
 
-      if ($paragraph_entity->hasField($field_name)
+      if ($paragraph_entity && $paragraph_entity->hasField($field_name)
         && !$paragraph_entity->get($field_name)->isEmpty()) {
         return trim($paragraph_entity->get($field_name)->value);
       }
