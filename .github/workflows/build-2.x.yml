@@ -95,7 +95,7 @@ jobs:
           cd $DRUPAL_DIR
           composer config repositories.local path "$GITHUB_WORKSPACE/build_dir"
           composer config minimum-stability dev
-          composer require "islandora/controlled_access_terms:dev-github-testing as dev-2.x"
+          composer require "drupal/controlled_access_terms:dev-github-testing as dev-2.x"
 
       - name: Install modules
         run: |
