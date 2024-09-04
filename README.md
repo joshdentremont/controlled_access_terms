@@ -30,7 +30,7 @@ Download and install [as with other Drupal modules](https://www.drupal.org/docs/
 For example, using composer from the Drupal site's web directory:
 
 ```
-$ composer require islandora/controlled_access_terms
+$ composer require drupal/controlled_access_terms
 $ drush en -y controlled_access_terms
 ```
 
@@ -120,7 +120,7 @@ displayed. The default setting is YYYY-MM-DD (e.g. 1900-01-31) but settings
 can change, for example, the separator and the date order to display dates in
 'mm/dd/yyyy' format (e.g. 01/31/1900).
 
-[1]: https://github.com/islandora/controlled_access_terms/actions/workflows/build-2.x.yml/badge.svg
+[1]: https://github.com/Islandora/controlled_access_terms/actions/workflows/build-2.x.yml/badge.svg
 [2]: http://img.shields.io/badge/CONTRIBUTING-Guidelines-blue.svg
 [3]: https://img.shields.io/badge/license-GPLv2-blue.svg?style=flat-square
 
