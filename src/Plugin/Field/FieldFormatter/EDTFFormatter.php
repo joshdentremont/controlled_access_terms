@@ -310,8 +310,9 @@ class EDTFFormatter extends FormatterBase {
 
     // Replace Xs with 0s and format date parts
     if ($unspecified_count > 0) {
-      if (strpos($year, 'X') !== FALSE)
+      if (strpos($year, 'X') !== FALSE) {
         $year = str_replace('X', '0', $year) . 's';
+      }
 
       if ($unspecified['fullyear']) {
         $year = 'unknown year';
@@ -349,7 +350,7 @@ class EDTFFormatter extends FormatterBase {
     // Full dates will have a comma before the year, like January 1, 1999
     // Dates with Xs in them will be written out more verbosely
     $d = intval($day);
-    $day_suffix = date('S',mktime(1,1,1,1,( (($d>=10)+($d>=20)+($d==0))*10 + $d%10) ));
+    $day_suffix = date('S',mktime(1, 1, 1, 1, ((($d >= 10) + ($d >= 20) + ($d == 0)) * 10 + $d % 10)));
     if ($settings['date_order'] === 'middle_endian' &&
         !preg_match('/\d/', $month) &&
         self::DELIMITERS[$settings['date_separator']] == ' ' &&
@@ -360,8 +361,9 @@ class EDTFFormatter extends FormatterBase {
       }
       // Unknown month only
       elseif($unspecified['month'] && $unspecified_count === 1) {
-        if ($day !== '')
+        if ($day !== '') {
           $day .= "$day_suffix day of an";
+        }
         $formatted_date = t(trim("$day $month, in $year"));
       }
       // Unknown day only
@@ -370,19 +372,24 @@ class EDTFFormatter extends FormatterBase {
       }
       // Unknown year and month only
       elseif(!$unspecified['day'] && $unspecified_count === 2) {
-        if ($day !== '')
+        if ($day !== '') {
           $day .= "$day_suffix day of an";
-        if ($year == 'unknown year')
+        }
+        if ($year == 'unknown year') {
           $formatted_date = t("$day $month, in an $year");
-        else
+        }
+        else {
           $formatted_date = t(trim("$day $month, in the " . str_replace('unknown year in the ', '', $year)));
+        }
       }
       // Unknown year and day only
       elseif(!$unspecified['month'] && $unspecified_count === 2) {
-        if ($year == 'unknown year')
+        if ($year == 'unknown year') {
           $formatted_date = t("$day in $month, in an $year");
-        else
+        }
+        else {
           $formatted_date = t("$day in $month, in the " . str_replace('unknown year in the ', '', $year));
+        }
       }
       // Unknown day and month only
       elseif($unspecified['day'] && $unspecified['month'] && $unspecified_count === 2) {
@@ -390,10 +397,12 @@ class EDTFFormatter extends FormatterBase {
       }
       // Unknown year, month, and day
       elseif($unspecified_count === 3) {
-        if ($year == 'unknown year')
+        if ($year == 'unknown year') {
           $formatted_date = t("Unknown day, month, and year");
-        else
+        }
+        else {
           $formatted_date = t("Unknown date, in the " . str_replace('unknown year in the ', '', $year));
+        }
       }
       // No unknown segments
       // Adds a comma after the month & day as long as there is at least one of them
@@ -406,8 +415,9 @@ class EDTFFormatter extends FormatterBase {
     }
 
     // Capitalize first letter for unknown dates
-    if ($unspecified_count > 0)
+    if ($unspecified_count > 0) {
       $formatted_date = ucfirst($formatted_date);
+    }
 
     // Time.
     // @todo Add time formatting options.
