@@ -444,7 +444,7 @@ class EDTFFormatter extends FormatterBase {
     }
     else {
       $formatted_date = t("@date", [
-        "@date" => implode(self::DELIMITERS[$settings['date_separator']], array_filter($parts_in_order))
+        "@date" => implode(self::DELIMITERS[$settings['date_separator']], array_filter($parts_in_order)),
       ]);
     }
 
