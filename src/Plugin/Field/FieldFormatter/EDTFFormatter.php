@@ -231,30 +231,30 @@ class EDTFFormatter extends FormatterBase {
     }
 
     // Unspecified.
-    $unspecified = array(
-      'fullyear' => false,
-      'year' => false,
-      'century' => false,
-      'decade' => false,
-      'month' => false,
-      'day' => false,
-    );
+    $unspecified = [
+      'fullyear' => FALSE,
+      'year' => FALSE,
+      'century' => FALSE,
+      'decade' => FALSE,
+      'month' => FALSE,
+      'day' => FALSE,
+    ];
     $unspecified_count = 0;
 
     if (strpos($parsed_date[EDTFUtils::YEAR_BASE], 'XXXX') !== FALSE) {
-      $unspecified['fullyear'] = true;
+      $unspecified['fullyear'] = TRUE;
       $unspecified_count++;
     }
     elseif (strpos($parsed_date[EDTFUtils::YEAR_BASE], 'XXX') !== FALSE) {
-      $unspecified['century'] = true;
+      $unspecified['century'] = TRUE;
       $unspecified_count++;
     }
     elseif (strpos($parsed_date[EDTFUtils::YEAR_BASE], 'XX') !== FALSE) {
-      $unspecified['decade'] = true;
+      $unspecified['decade'] = TRUE;
       $unspecified_count++;
     }
     elseif (strpos($parsed_date[EDTFUtils::YEAR_BASE], 'X') !== FALSE) {
-      $unspecified['year'] = true;
+      $unspecified['year'] = TRUE;
       $unspecified_count++;
     }
 
@@ -262,7 +262,7 @@ class EDTFFormatter extends FormatterBase {
 
     if (array_key_exists(EDTFUtils::MONTH, $parsed_date)) {
       if (strpos($parsed_date[EDTFUtils::MONTH], 'X') !== FALSE) {
-        $unspecified['month'] = true;
+        $unspecified['month'] = TRUE;
         $unspecified_count++;
       }
       elseif ($settings['month_format'] === 'mmm' || $settings['month_format'] === 'mmmm') {
@@ -282,7 +282,7 @@ class EDTFFormatter extends FormatterBase {
 
     if (array_key_exists(EDTFUtils::DAY, $parsed_date)) {
       if (strpos($parsed_date[EDTFUtils::DAY], 'X') !== FALSE) {
-        $unspecified['day'] = true;
+        $unspecified['day'] = TRUE;
         $unspecified_count++;
       }
       elseif ($settings['day_format'] === 'd') {
@@ -308,7 +308,7 @@ class EDTFFormatter extends FormatterBase {
       }
     }
 
-    // Replace Xs with 0s and format date parts
+    // Replace Xs with 0s and format date parts.
     if ($unspecified_count > 0) {
       if (strpos($year, 'X') !== FALSE) {
         $year = str_replace('X', '0', $year) . 's';
@@ -346,75 +346,107 @@ class EDTFFormatter extends FormatterBase {
       $parts_in_order = [$year, $month, $day];
     }
 
-    // Special cases for middle endian dates separated by spaces, with months spelled out
-    // Full dates will have a comma before the year, like January 1, 1999
-    // Dates with Xs in them will be written out more verbosely
+    // Special cases for middle endian dates separated by spaces, with months spelled out.
+    // Full dates will have a comma before the year, like January 1, 1999.
+    // Dates with Xs in them will be written out more verbosely.
     $d = intval($day);
     $day_suffix = date('S',mktime(1, 1, 1, 1, ((($d >= 10) + ($d >= 20) + ($d == 0)) * 10 + $d % 10)));
     if ($settings['date_order'] === 'middle_endian' &&
         !preg_match('/\d/', $month) &&
         self::DELIMITERS[$settings['date_separator']] == ' ' &&
         count(array_filter([$month, $day])) > 0) {
-      // Unknown year only
+      // Unknown year only.
       if (!$unspecified['day'] && !$unspecified['month'] && $unspecified_count === 1) {
-        $formatted_date = t(trim("$month $day") . ", of an $year");
+        $formatted_date = t("@md, of an @year", [
+          "@md" => trim("$month $day"),
+          "@year" => $year,
+        ]);
       }
-      // Unknown month only
-      elseif($unspecified['month'] && $unspecified_count === 1) {
+      // Unknown month only.
+      elseif ($unspecified['month'] && $unspecified_count === 1) {
         if ($day !== '') {
           $day .= "$day_suffix day of an";
         }
-        $formatted_date = t(trim("$day $month, in $year"));
+        $formatted_date = t("@dm, in @year", [
+          "@dm" => trim("$day $month"),
+          "@year" => $year,
+        ]);
       }
-      // Unknown day only
-      elseif($unspecified['day'] && $unspecified_count === 1) {
-        $formatted_date = t("$day in $month, $year");
+      // Unknown day only.
+      elseif ($unspecified['day'] && $unspecified_count === 1) {
+        $formatted_date = t("@day in @month, @year", [
+          "@day" => $day,
+          "@month" => $month,
+          "@year" => $year,
+        ]);
       }
-      // Unknown year and month only
-      elseif(!$unspecified['day'] && $unspecified_count === 2) {
+      // Unknown year and month only.
+      elseif (!$unspecified['day'] && $unspecified_count === 2) {
         if ($day !== '') {
           $day .= "$day_suffix day of an";
         }
         if ($year == 'unknown year') {
-          $formatted_date = t("$day $month, in an $year");
+          $formatted_date = t("@day @month, in an @year", [
+          "@day" => $day,
+          "@month" => $month,
+          "@year" => $year,
+        ]);
         }
         else {
-          $formatted_date = t(trim("$day $month, in the " . str_replace('unknown year in the ', '', $year)));
+          $formatted_date = t("@dm, in the @year", [
+            "@dm" => trim("$day $month"),
+            "@year" => str_replace('unknown year in the ', '', $year),
+          ]);
         }
       }
-      // Unknown year and day only
-      elseif(!$unspecified['month'] && $unspecified_count === 2) {
+      // Unknown year and day only.
+      elseif (!$unspecified['month'] && $unspecified_count === 2) {
         if ($year == 'unknown year') {
-          $formatted_date = t("$day in $month, in an $year");
+          $formatted_date = t("@day in @month, in an @year", [
+            "@day" => $day,
+            "@month" => $month,
+            "@year" => $year,
+          ]);
         }
         else {
-          $formatted_date = t("$day in $month, in the " . str_replace('unknown year in the ', '', $year));
+          $formatted_date = t("@day in @month, in the @year", [
+            "@day" => $day,
+            "@month" => $month,
+            "@year" => str_replace('unknown year in the ', '', $year),
+          ]);
         }
       }
-      // Unknown day and month only
-      elseif($unspecified['day'] && $unspecified['month'] && $unspecified_count === 2) {
-        $formatted_date = t("Unknown date, in $year");
+      // Unknown day and month only.
+      elseif ($unspecified['day'] && $unspecified['month'] && $unspecified_count === 2) {
+        $formatted_date = t("Unknown date, in @year", [
+          "@year" => $year,
+        ]);
       }
-      // Unknown year, month, and day
-      elseif($unspecified_count === 3) {
+      // Unknown year, month, and day.
+      elseif ($unspecified_count === 3) {
         if ($year == 'unknown year') {
           $formatted_date = t("Unknown day, month, and year");
         }
         else {
-          $formatted_date = t("Unknown date, in the " . str_replace('unknown year in the ', '', $year));
+          $formatted_date = t("Unknown date, in the @year", [
+            "@year" => str_replace('unknown year in the ', '', $year),
+          ]);
         }
       }
-      // No unknown segments
-      // Adds a comma after the month & day as long as there is at least one of them
+      // No unknown segments.
+      // Adds a comma after the month & day as long as there is at least one of them.
       else {
-        $formatted_date = t(trim("$month $day") . ", $year");
+        $formatted_date = t("@md, @year", [
+          "@md" => trim("$month $day"),
+          "@year" => $year,
+        ]);
       }
     }
     else {
       $formatted_date = t(implode(self::DELIMITERS[$settings['date_separator']], array_filter($parts_in_order)));
     }
 
-    // Capitalize first letter for unknown dates
+    // Capitalize first letter for unknown dates.
     if ($unspecified_count > 0) {
       $formatted_date = ucfirst($formatted_date);
     }
