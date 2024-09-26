@@ -346,11 +346,11 @@ class EDTFFormatter extends FormatterBase {
       $parts_in_order = [$year, $month, $day];
     }
 
-    // Special cases for middle endian dates separated by spaces, with months spelled out.
+    // Special cases for middle endian dates with spaces and months spelled out.
     // Full dates will have a comma before the year, like January 1, 1999.
     // Dates with Xs in them will be written out more verbosely.
     $d = intval($day);
-    $day_suffix = date('S',mktime(1, 1, 1, 1, ((($d >= 10) + ($d >= 20) + ($d == 0)) * 10 + $d % 10)));
+    $day_suffix = date('S', mktime(1, 1, 1, 1, ((($d >= 10) + ($d >= 20) + ($d == 0)) * 10 + $d % 10)));
     if ($settings['date_order'] === 'middle_endian' &&
         !preg_match('/\d/', $month) &&
         self::DELIMITERS[$settings['date_separator']] == ' ' &&
@@ -387,10 +387,10 @@ class EDTFFormatter extends FormatterBase {
         }
         if ($year == 'unknown year') {
           $formatted_date = t("@day @month, in an @year", [
-          "@day" => $day,
-          "@month" => $month,
-          "@year" => $year,
-        ]);
+            "@day" => $day,
+            "@month" => $month,
+            "@year" => $year,
+          ]);
         }
         else {
           $formatted_date = t("@dm, in the @year", [
@@ -434,7 +434,7 @@ class EDTFFormatter extends FormatterBase {
         }
       }
       // No unknown segments.
-      // Adds a comma after the month & day as long as there is at least one of them.
+      // Adds a comma after the month & day.
       else {
         $formatted_date = t("@md, @year", [
           "@md" => trim("$month $day"),
@@ -443,7 +443,9 @@ class EDTFFormatter extends FormatterBase {
       }
     }
     else {
-      $formatted_date = t(implode(self::DELIMITERS[$settings['date_separator']], array_filter($parts_in_order)));
+      $formatted_date = t("@date", [
+        "@date" => implode(self::DELIMITERS[$settings['date_separator']], array_filter($parts_in_order))
+      ]);
     }
 
     // Capitalize first letter for unknown dates.
